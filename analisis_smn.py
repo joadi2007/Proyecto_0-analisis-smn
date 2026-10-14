@@ -214,41 +214,85 @@ def contar_ciudades_informadas(observaciones: dict) -> int:
     return informadas
 
 
-if __name__ == "__main__":
+def contar_archivos(carpeta: str, extension: str) -> int:
+    # Cuenta los archivos de la carpeta que terminan con la extensión dada
+    cantidad = 0
+    try:
+        for nombre in os.listdir(carpeta):
+            if nombre.endswith(extension):
+                cantidad += 1
+    except FileNotFoundError:
+        pass  # si la carpeta no existe, hay 0 archivos
+    return cantidad
+
+
+def convertir_txt_a_json(ruta: str, nombre_sin_ext: str) -> None:
+    # Lee un .txt del SMN, lo guarda como .json en obs_json/ e informa los conteos
+    print("archivo del SMN, convirtiendo a json...")
+
+    print("leyendo observaciones...")
+    resultado, lineas_invalidas = leer_observaciones(ruta)
+
+    # Si no se leyó ninguna observación (archivo inexistente o vacío), no seguimos
+    if not resultado:
+        print("no se pudo leer ninguna observación, no se genera el json.")
+        return
+    print("lectura completada.")
+
+    print("pasando las fechas a formato ISO 8601...")
+    for datos in resultado.values():
+        if datos["fecha_y_hora"] is not None:
+            # timespec='minutes' hace que no se muestren los segundos
+            datos["fecha_y_hora"] = datos["fecha_y_hora"].isoformat(timespec='minutes')
+    print("fechas convertidas.")
+
+    if not os.path.exists("obs_json"):
+        print("el directorio obs_json no existe, creándolo...")
+        os.mkdir("obs_json")
+        print("directorio creado.")
+
+    ruta_salida = f"obs_json/{nombre_sin_ext}.json"
+    print(f"guardando {ruta_salida}...")
+    guardar_json(resultado, ruta_salida)
+    print("archivo guardado.")
+
+    print(f"Ciudades que contiene el archivo: {len(resultado)}")
+    print(f"Ciudades informadas: {contar_ciudades_informadas(resultado)}")
+
+
+def informar_json(ruta: str) -> None:
+    # Lee un .json (siempre utf-8) e informa la cantidad de ciudades
+    try:
+        with open(ruta, 'r', encoding='utf-8') as archivo:
+            datos_json = json.load(archivo)
+    except FileNotFoundError:
+        print(f"Error: no se encontró el archivo '{ruta}'")
+        return
+    except ValueError:
+        print(f"Error: '{ruta}' no es un json válido.")
+        return
+
+    print(f"Ciudades que contiene el archivo JSON: {len(datos_json)}")
+    print(f"Ciudades informadas: {contar_ciudades_informadas(datos_json)}")
+
+
+def main() -> None:
     if len(sys.argv) > 2:
         print("Aviso: Se pasó más de un parámetro. Finalizando la ejecución.")
-        sys.exit()
+        return
 
     if len(sys.argv) == 1:
-        print('Aviso: no se proporcionó ningún archivo por parámetro.')
+        print("Aviso: no se proporcionó ningún archivo por parámetro.")
+        print(f"Archivos .txt en 'datos/': {contar_archivos('datos', '.txt')}")
+        print(f"Archivos .json en 'obs_json/': {contar_archivos('obs_json', '.json')}")
+        return
 
-        archivos_txt = 0
-        try:
-            for archivo in os.listdir('datos'):
-                if archivo.endswith('.txt'):
-                    archivos_txt += 1
-        except FileNotFoundError:
-            pass 
-
-        archivos_json = 0 
-        try:
-            for archivo in os.listdir('obs_json'):
-                if archivo.endswith('.json'):
-                    archivos_json += 1
-        except FileNotFoundError:
-            pass
-
-        print(f"Archivos .txt en 'datos/': {archivos_txt}")
-        print(f"Archivos .json en 'obs_json/': {archivos_json}")
-        sys.exit() 
-
-    # Si el programa llega hasta acá, es porque hay exactamente 1 parámetro
+    # Si llega hasta acá, hay exactamente 1 parámetro
     ruta = sys.argv[1]
 
-    partes_ruta = ruta.split('/')
-    nombre_archivo = partes_ruta[-1]
+    nombre_archivo = ruta.split('/')[-1]
     partes_nombre = nombre_archivo.rsplit('.', 1)
-    nombres_sin_ext = partes_nombre[0]
+    nombre_sin_ext = partes_nombre[0]
 
     if len(partes_nombre) > 1:
         extension = '.' + partes_nombre[1]
@@ -256,48 +300,12 @@ if __name__ == "__main__":
         extension = ''
 
     if extension.lower() == '.txt':
-        print("archivo del SMN, convirtiendo a json...")
-
-        print("leyendo observaciones...")
-        resultado, lineas_invalidas = leer_observaciones(ruta)
-
-        # Si no se leyó ninguna observación (archivo inexistente o vacío), no seguimos
-        if not resultado:
-            print("no se pudo leer ninguna observación, no se genera el json.")
-            sys.exit()
-        print("lectura completada.")
-
-        print("pasando las fechas a formato ISO 8601...")
-        for ciudad, datos in resultado.items():
-            if datos["fecha_y_hora"] is not None:
-                # timespec='minutes' hace que no se muestren los segundos
-                datos["fecha_y_hora"] = datos["fecha_y_hora"].isoformat(timespec='minutes')
-        print("fechas convertidas.")
-
-        if not os.path.exists("obs_json"):
-            print("el directorio obs_json no existe, creándolo...")
-            os.mkdir("obs_json")
-            print("directorio creado.")
-
-        ruta_salida = f"obs_json/{nombres_sin_ext}.json"
-        print(f"guardando {ruta_salida}...")
-        guardar_json(resultado, ruta_salida)
-        print("archivo guardado.")
-
-        # Los dos conteos, en 2 líneas como pide la consigna
-        print(f"Ciudades que contiene el archivo: {len(resultado)}")
-        print(f"Ciudades informadas: {contar_ciudades_informadas(resultado)}")
-
+        convertir_txt_a_json(ruta, nombre_sin_ext)
     elif extension.lower() == '.json':
-        try:
-            # La consigna dice que los json siempre vienen en utf-8
-            with open(ruta, 'r', encoding='utf-8') as archivo:
-                datos_json = json.load(archivo)
-
-            print(f'Ciudades que contiene el archivo JSON: {len(datos_json)}')
-            print(f'Ciudades informadas: {contar_ciudades_informadas(datos_json)}')
-        except FileNotFoundError:
-            print(f"Error: no se encontró el archivo '{ruta}'")
-
+        informar_json(ruta)
     else:
         print(f"Error: Extensión '{extension}' no soportada.")
+
+
+if __name__ == "__main__":
+    main()
