@@ -197,17 +197,85 @@ def mostrar_resumen(observaciones: dict, lineas_invalidas: list) -> None:
     print(f"  Más viento: {top_n_ciudades(observaciones, 'velocidad_viento', 5)}")
     print(f"  Menos viento: {top_n_ciudades(observaciones, 'velocidad_viento', 5, descendente=False)}")
 
-
 if __name__ == "__main__":
     if len(sys.argv) > 2:
         print("Aviso: Se pasó más de un parámetro. Finalizando la ejecución.")
         sys.exit()
 
-    if len(sys.argv) < 2:
-        print("Uso: python analisis_smn.py <ruta_al_archivo>")
+    if len(sys.argv) == 1:
+        print('Aviso: no se proporcionó ningún archivo por parámetro.')
+
+        archivos_txt = 0
+        try:
+            for archivo in os.listdir('datos'):
+                if archivo.endswith('.txt'):
+                    archivos_txt += 1
+        except FileNotFoundError:
+            pass 
+
+        archivos_json = 0 
+        try:
+            for archivo in os.listdir('obs_json'):
+                if archivo.endswith('.json'):
+                    archivos_json += 1
+        except FileNotFoundError:
+            pass
+
+        print(f"Archivos .txt en 'datos/': {archivos_txt}")
+        print(f"Archivos .json en 'obs_json/': {archivos_json}")
+        sys.exit() 
+
+    # --- ACÁ EMPIEZA EL PASO 3 ---
+    # Si el programa llega hasta acá, es porque hay exactamente 1 parámetro
+    ruta = sys.argv[1]
+
+    partes_ruta = ruta.split('/')
+    nombre_archivo = partes_ruta[-1]
+    partes_nombre = nombre_archivo.split('.')
+    nombres_sin_ext = partes_nombre[0]
+
+    if len(partes_nombre) > 1:
+        extension = '.' + partes_nombre[1]
     else:
-        ruta = sys.argv[1]
+        extension = ''
+
+    if extension.lower() == '.txt':
+        print("archivo del SMN, convirtiendo a json...")
+        
         resultado, lineas_invalidas = leer_observaciones(ruta)
-        mostrar_resumen(resultado, lineas_invalidas)
-        guardar_json(resultado, "datos/observaciones.json")
+        
+        # Recorre los datos para cambiar las fechas al formato ISO 8601
+        for ciudad, datos in resultado.items():
+            if datos["fecha_y_hora"] is not None:
+                # timespec='minutes' hace que no se muestren los segundos
+                datos["fecha_y_hora"] = datos["fecha_y_hora"].isoformat(timespec='minutes')
+        
+        # Intenta crear el directorio. Si falla porque ya existe, simplemente lo ignora con 
+        try:
+            os.mkdir("obs_json")
+            print("el directorio obs_json no existe, creándolo...")
+        except FileExistsError:
+            pass 
+            
+        # Armamos la ruta nueva con la carpeta nueva y la extensión json
+        ruta_salida = f"obs_json/{nombres_sin_ext}.json"
+        
+        # Usamos tu función original para guardar[span_3](start_span)[span_3](end_span)
+        guardar_json(resultado, ruta_salida)
+        
+        # Contamos cuántas ciudades tienen datos reales (informadas)
+        ciudades_informadas = 0
+        for d in resultado.values():
+            if d.get("temperatura") is not None:
+                ciudades_informadas += 1
+                
+        # Mostramos los resultados en a lo sumo 2 líneas[span_4](start_span)[span_4](end_span)
+        print(f"Ciudades que contiene el archivo: {len(resultado)}")
+        print(f"Ciudades informadas: {ciudades_informadas}")
+
+    elif extension.lower() == '.json':
+        print("Es un archivo JSON (lógica pendiente)")
+        
+    else:
+        print(f"Error: Extensión '{extension}' no soportada.")
 
