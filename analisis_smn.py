@@ -247,7 +247,7 @@ if __name__ == "__main__":
 
     partes_ruta = ruta.split('/')
     nombre_archivo = partes_ruta[-1]
-    partes_nombre = nombre_archivo.split('.')
+    partes_nombre = nombre_archivo.rsplit('.', 1)
     nombres_sin_ext = partes_nombre[0]
 
     if len(partes_nombre) > 1:
