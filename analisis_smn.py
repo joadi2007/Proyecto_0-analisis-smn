@@ -204,6 +204,16 @@ def mostrar_resumen(observaciones: dict, lineas_invalidas: list) -> None:
     print(f"  Más viento: {top_n_ciudades(observaciones, 'velocidad_viento', 5)}")
     print(f"  Menos viento: {top_n_ciudades(observaciones, 'velocidad_viento', 5, descendente=False)}")
 
+
+def contar_ciudades_informadas(observaciones: dict) -> int:
+    # Cuenta las ciudades que tienen temperatura (dato válido)
+    informadas = 0
+    for datos in observaciones.values():
+        if datos.get("temperatura") is not None:
+            informadas += 1
+    return informadas
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 2:
         print("Aviso: Se pasó más de un parámetro. Finalizando la ejecución.")
@@ -248,43 +258,35 @@ if __name__ == "__main__":
     if extension.lower() == '.txt':
         print("archivo del SMN, convirtiendo a json...")
 
-        print('Leyendo observaciones...')
+        print("leyendo observaciones...")
         resultado, lineas_invalidas = leer_observaciones(ruta)
 
+        # Si no se leyó ninguna observación (archivo inexistente o vacío), no seguimos
         if not resultado:
-            print('No se pudo leer ninguna observación, no se genera el json')
+            print("no se pudo leer ninguna observación, no se genera el json.")
             sys.exit()
-        print('Lectura completa')
+        print("lectura completada.")
 
-        print('Pasando las fechas a formato ISO')
-        # Recorre los datos para cambiar las fechas al formato ISO 8601
+        print("pasando las fechas a formato ISO 8601...")
         for ciudad, datos in resultado.items():
             if datos["fecha_y_hora"] is not None:
                 # timespec='minutes' hace que no se muestren los segundos
                 datos["fecha_y_hora"] = datos["fecha_y_hora"].isoformat(timespec='minutes')
-        print('Fechas convertidas')
+        print("fechas convertidas.")
 
-        # Intenta crear el directorio. Si falla porque ya existe, simplemente lo ignora con 
-        if not os.path.exists('obs_json'):
-            print('El directorio obs_json no existe, creándolo...')
-            os.mkdir('obs_json')
-            print('Directorio creado.')
-                    
-        # Armamos la ruta nueva con la carpeta nueva y la extensión json
-        ruta_salida = f"obs_json/ {nombres_sin_ext}.json"
-        print(f'guardando {ruta_salida}...') 
+        if not os.path.exists("obs_json"):
+            print("el directorio obs_json no existe, creándolo...")
+            os.mkdir("obs_json")
+            print("directorio creado.")
+
+        ruta_salida = f"obs_json/{nombres_sin_ext}.json"
+        print(f"guardando {ruta_salida}...")
         guardar_json(resultado, ruta_salida)
-        print('archivo guardado')
-        
-        # Contamos cuántas ciudades tienen datos reales (informadas)
-        ciudades_informadas = 0
-        for d in resultado.values():
-            if d.get("temperatura") is not None:
-                ciudades_informadas += 1
-                
-        # Mostramos los resultados en a lo sumo 2 líneas
+        print("archivo guardado.")
+
+        # Los dos conteos, en 2 líneas como pide la consigna
         print(f"Ciudades que contiene el archivo: {len(resultado)}")
-        print(f"Ciudades informadas: {ciudades_informadas}")
+        print(f"Ciudades informadas: {contar_ciudades_informadas(resultado)}")
 
     elif extension.lower() == '.json':
         try:
@@ -292,15 +294,10 @@ if __name__ == "__main__":
             with open(ruta, 'r', encoding='utf-8') as archivo:
                 datos_json = json.load(archivo)
 
-            ciudades_informadas = 0 
-            for i in datos_json.values():
-                if i.get('temperatura') is not None:
-                    ciudades_informadas += 1
-
-            print(f'Ciudades que contiene el archivo JSON: {len(datos_json)}')   
-            print(f'Ciudades informadas: {ciudades_informadas}')  
+            print(f'Ciudades que contiene el archivo JSON: {len(datos_json)}')
+            print(f'Ciudades informadas: {contar_ciudades_informadas(datos_json)}')
         except FileNotFoundError:
             print(f"Error: no se encontró el archivo '{ruta}'")
-        
+
     else:
         print(f"Error: Extensión '{extension}' no soportada.")
