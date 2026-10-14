@@ -21,17 +21,24 @@ def guardar_json(observaciones: dict, ruta_salida: str) -> None:
 def separar_viento(campo_viento: str) -> tuple:
     # Separa "Norte  5" en ("Norte", 5.0); si es "Calma", velocidad = 0
     partes = campo_viento.split()
+
+    # campo vacío: no hay ni dirección ni velocidad
+    if len(partes) == 0:
+        return None, None
+
+    direccion = partes[0]
+
     if len(partes) == 1:
-        direccion = partes[0]
-        velocidad = 0
+        velocidad = 0  # "Calma": no hay velocidad numérica
     else:
-        direccion = partes[0]
-        velocidad = float(partes[1])
+        try:
+            velocidad = float(partes[1])
+        except ValueError:
+            velocidad = None  # velocidad no numérica: la tomamos como dato faltante
 
     return direccion, velocidad
 
-
-def leer_observaciones(ruta: str) -> dict:
+def leer_observaciones(ruta: str) -> tuple:
     # Lee el .txt del SMN y arma {ciudad: {datos}}; devuelve también la lista de líneas mal formadas
     observaciones = {}
     lineas_invalidas = []
