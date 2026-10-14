@@ -37,7 +37,14 @@ def leer_observaciones(ruta: str) -> dict:
     lineas_invalidas = []
 
     try:
-        with open(ruta, 'r', encoding='latin-1') as archivo:  # latin-1: el archivo no viene en UTF-8
+        codificacion = 'utf-8'
+        try:
+            with open(ruta, 'r', encoding='utf-8') as archivo_prueba:
+                archivo_prueba.read()
+        except UnicodeDecodeError:
+            codificacion = 'latin-1'
+
+        with open(ruta, 'r', encoding=codificacion) as archivo:
             for linea in archivo:
                 campos = linea.strip().split(";")
 
@@ -225,7 +232,6 @@ if __name__ == "__main__":
         print(f"Archivos .json en 'obs_json/': {archivos_json}")
         sys.exit() 
 
-    # --- ACÁ EMPIEZA EL PASO 3 ---
     # Si el programa llega hasta acá, es porque hay exactamente 1 parámetro
     ruta = sys.argv[1]
 
@@ -260,7 +266,7 @@ if __name__ == "__main__":
         # Armamos la ruta nueva con la carpeta nueva y la extensión json
         ruta_salida = f"obs_json/{nombres_sin_ext}.json"
         
-        # Usamos tu función original para guardar[span_3](start_span)[span_3](end_span)
+        # Usamos tu función original para guardar
         guardar_json(resultado, ruta_salida)
         
         # Contamos cuántas ciudades tienen datos reales (informadas)
@@ -269,13 +275,25 @@ if __name__ == "__main__":
             if d.get("temperatura") is not None:
                 ciudades_informadas += 1
                 
-        # Mostramos los resultados en a lo sumo 2 líneas[span_4](start_span)[span_4](end_span)
+        # Mostramos los resultados en a lo sumo 2 líneas
         print(f"Ciudades que contiene el archivo: {len(resultado)}")
         print(f"Ciudades informadas: {ciudades_informadas}")
 
     elif extension.lower() == '.json':
-        print("Es un archivo JSON (lógica pendiente)")
+        try:
+            # La consigna dice que los json siempre vienen en utf-8
+            with open(ruta, 'r', encoding='utf-8') as archivo:
+                datos_json = json.load(archivo)
+
+            ciudades_informadas = 0 
+            for i in datos_json.values():
+                if i.get('temperatura') is not None:
+                    ciudades_informadas += 1
+
+            print(f'Ciudades que contiene el archivo JSON: {len(datos_json)}')   
+            print(f'Ciudades informadas: {ciudades_informadas}')  
+        except FileNotFoundError:
+            print(f"Error: no se encontró el archivo '{ruta}'")
         
     else:
         print(f"Error: Extensión '{extension}' no soportada.")
-
