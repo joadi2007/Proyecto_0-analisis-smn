@@ -22,8 +22,8 @@ ejecución principal.
 ## Cómo ejecutarlo
 
 ```bash
-python analisis_smn.py datos/estado_tiempo.txt
-python analisis_smn.py obs_json/estado_tiempo.json
+python smn.py datos/estado_tiempo.txt
+python smn.py obs_json/estado_tiempo.json
 ```
 
 - Con un `.txt`: imprime una leyenda antes de cada acción (leer, convertir
@@ -71,7 +71,7 @@ repositorio (ver `.gitignore`).
 
 ```
 ├── README.md
-├── analisis_smn.py
+├── smn.py
 ├── datos/          (archivos .txt del SMN)
 ├── obs_json/       (se genera al ejecutar, no versionado)
 └── .gitignore
