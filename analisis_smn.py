@@ -247,31 +247,34 @@ if __name__ == "__main__":
 
     if extension.lower() == '.txt':
         print("archivo del SMN, convirtiendo a json...")
-        
+
+        print('Leyendo observaciones...')
         resultado, lineas_invalidas = leer_observaciones(ruta)
 
         if not resultado:
             print('No se pudo leer ninguna observación, no se genera el json')
             sys.exit()
-        
+        print('Lectura completa')
+
+        print('Pasando las fechas a formato ISO')
         # Recorre los datos para cambiar las fechas al formato ISO 8601
         for ciudad, datos in resultado.items():
             if datos["fecha_y_hora"] is not None:
                 # timespec='minutes' hace que no se muestren los segundos
                 datos["fecha_y_hora"] = datos["fecha_y_hora"].isoformat(timespec='minutes')
-        
+        print('Fechas convertidas')
+
         # Intenta crear el directorio. Si falla porque ya existe, simplemente lo ignora con 
-        try:
-            os.mkdir("obs_json")
-            print("el directorio obs_json no existe, creándolo...")
-        except FileExistsError:
-            pass 
-            
+        if not os.path.exists('obs_json'):
+            print('El directorio obs_json no existe, creándolo...')
+            os.mkdir('obs_json')
+            print('Directorio creado.')
+                    
         # Armamos la ruta nueva con la carpeta nueva y la extensión json
-        ruta_salida = f"obs_json/{nombres_sin_ext}.json"
-        
-        # Usamos tu función original para guardar
+        ruta_salida = f"obs_json/ {nombres_sin_ext}.json"
+        print(f'guardando {ruta_salida}...') 
         guardar_json(resultado, ruta_salida)
+        print('archivo guardado')
         
         # Contamos cuántas ciudades tienen datos reales (informadas)
         ciudades_informadas = 0
