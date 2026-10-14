@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import sys
+import os
 
 # Mapea nombres de mes en español (como vienen en el archivo del SMN) a su número
 MESES_ESP = {
@@ -198,6 +199,10 @@ def mostrar_resumen(observaciones: dict, lineas_invalidas: list) -> None:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        print("Aviso: Se pasó más de un parámetro. Finalizando la ejecución.")
+        sys.exit()
+
     if len(sys.argv) < 2:
         print("Uso: python analisis_smn.py <ruta_al_archivo>")
     else:
@@ -205,3 +210,4 @@ if __name__ == "__main__":
         resultado, lineas_invalidas = leer_observaciones(ruta)
         mostrar_resumen(resultado, lineas_invalidas)
         guardar_json(resultado, "datos/observaciones.json")
+
