@@ -249,6 +249,10 @@ if __name__ == "__main__":
         print("archivo del SMN, convirtiendo a json...")
         
         resultado, lineas_invalidas = leer_observaciones(ruta)
+
+        if not resultado:
+            print('No se pudo leer ninguna observación, no se genera el json')
+            sys.exit()
         
         # Recorre los datos para cambiar las fechas al formato ISO 8601
         for ciudad, datos in resultado.items():
